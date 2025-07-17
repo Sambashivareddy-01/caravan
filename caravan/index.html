@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 'Bharat-Yaan': The Ultimate Caravan Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Modern Earth -->
+    <!-- Application Structure Plan: The application is designed as a single-page, top-to-bottom virtual tour of a caravan concept, prioritizing an engaging narrative over a static report format. It starts with a broad vision (Hero section), moves to the solid foundation (Chassis), explores the design (Exterior/Interior), allows for deep-dives into specifics (Features, Finishes), visualizes the space (Floorplan), provides market context (Comparison Chart), and ends with a call to action. This thematic, linear-scrolling structure with interactive 'islands' (tabs, toggles) was chosen to guide the user through a compelling story of the product, making the complex information digestible and exciting. It encourages exploration at key points without disrupting the main flow, which is ideal for presenting a new design concept. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Caravan Zones (Cockpit, Lounge, etc.) -> Goal: Organize & Showcase -> Method: Tabbed content display (HTML/JS) -> Interaction: Click tabs to reveal zone details -> Justification: Prevents an overwhelmingly long page by breaking the interior into focused, user-selectable sections.
+        - Report Info: Material & Color Options -> Goal: Demonstrate Customization -> Method: Interactive grid of swatches updating a display panel -> Interaction: User clicks a swatch to change text and a visual hint -> Justification: Provides a hands-on, interactive way to understand the 'luxurious' and 'sporty' material choices.
+        - Report Info: Key Specifications (Tank capacities, power, etc.) -> Goal: Compare & Quantify -> Method: Horizontal Bar Chart (Chart.js) -> Interaction: Hovering over bars reveals tooltips with exact figures -> Justification: Offers a clear, data-driven comparison against a standard RV, highlighting the concept's superiority. Uses Canvas, avoiding SVG.
+        - Report Info: Vehicle Layout -> Goal: Visualize Spatial Arrangement -> Method: Interactive diagram built with styled HTML divs and Tailwind CSS -> Interaction: Hovering over a labeled area highlights it and shows a description -> Justification: An accessible, non-graphical way to represent the floorplan, making it lightweight and interactive without relying on static images or SVG.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #4A4A4A;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Playfair Display', serif;
+        }
+        .nav-link {
+            transition: color 0.3s ease, border-color 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #C09578;
+            border-bottom-color: #C09578;
+        }
+        .tab-button.active {
+            background-color: #C09578;
+            color: #FFFFFF;
+        }
+        .swatch.active {
+            outline: 2px solid #C09578;
+            outline-offset: 2px;
+        }
+        .floorplan-area {
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        .floorplan-area:hover {
+            background-color: rgba(192, 149, 120, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* Futuristic Animations & Effects */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes gridMove {
+            0% {
+                transform: translate(0, 0);
+            }
+            100% {
+                transform: translate(50px, 50px);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(5deg);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            }
+            50% {
+                box-shadow: 0 0 40px rgba(59, 130, 246, 0.8), 0 0 60px rgba(147, 51, 234, 0.6);
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 1s ease-out;
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .animate-glow {
+            animation: glow 3s ease-in-out infinite;
+        }
+
+        .animate-shimmer {
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        /* Futuristic scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(45deg, #06b6d4, #8b5cf6);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(45deg, #0891b2, #7c3aed);
+        }
+
+        /* Glassmorphism effect */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Neon text effect */
+        .neon-text {
+            text-shadow: 
+                0 0 5px currentColor,
+                0 0 10px currentColor,
+                0 0 15px currentColor,
+                0 0 20px currentColor;
+        }
+
+        /* Holographic effect */
+        .holographic {
+            background: linear-gradient(45deg, #ff006e, #00f5ff, #ffbe0b, #8338ec);
+            background-size: 400% 400%;
+            animation: gradient 4s ease infinite;
+        }
+
+        /* Enhanced button styles */
+        .btn-futuristic {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(45deg, #06b6d4, #8b5cf6);
+            border: none;
+            color: white;
+            font-weight: bold;
+            padding: 12px 30px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-futuristic:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-futuristic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-futuristic:hover::before {
+            left: 100%;
+        }
+
+        /* Enhanced nav links */
+        .nav-link {
+            position: relative;
+            color: #374151;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .nav-link:hover {
+            color: #06b6d4;
+        }
+
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #06b6d4, #8b5cf6);
+            transition: width 0.3s ease;
+        }
+
+        .nav-link:hover::after {
+            width: 100%;
+        }
+
+        /* Enhanced active states */
+        .tab-button.active {
+            color: #06b6d4;
+            border-bottom: 2px solid #06b6d4;
+            background: linear-gradient(45deg, #06b6d4, #8b5cf6);
+        }
+
+        .feature-toggle-button.bg-gray-200 {
+            background: linear-gradient(45deg, #06b6d4, #8b5cf6);
+            color: white;
+        }
+
+        /* Loading animations */
+        .loader {
+            border: 4px solid rgba(59, 130, 246, 0.3);
+            border-top: 4px solid #06b6d4;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 40vh;
+            width: 100%;
+            max-width: 800px;
+            max-height: 450px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #C09578;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Gallery Animations */
+        .gallery-item {
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        .gallery-item:nth-child(1) { animation-delay: 0.1s; }
+        .gallery-item:nth-child(2) { animation-delay: 0.2s; }
+        .gallery-item:nth-child(3) { animation-delay: 0.3s; }
+        .gallery-item:nth-child(4) { animation-delay: 0.4s; }
+        .gallery-item:nth-child(5) { animation-delay: 0.5s; }
+        .gallery-item:nth-child(6) { animation-delay: 0.6s; }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Hero Section Animations */
+        .animate-fadeInUp {
+            animation: fadeInUp 1s ease-out forwards;
+            opacity: 0;
+        }
+        
+        /* Slideshow animations */
+        .slideshow-fade-in {
+            animation: slideIn 0.5s ease-in-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* Hover effects for gallery items */
+        .gallery-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(192, 149, 120, 0.1), rgba(192, 149, 120, 0.3));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border-radius: 0.5rem;
+        }
+        
+        .gallery-item:hover::before {
+            opacity: 1;
+        }
+        
+        /* Pulse animation for play/pause button */
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Enhanced caption styling */
+        .caption-overlay {
+            background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.7), transparent);
+            backdrop-filter: blur(2px);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-gradient-to-r from-slate-900/95 via-blue-900/95 to-purple-900/95 backdrop-blur-lg sticky top-0 z-50 shadow-lg border-b border-cyan-500/20">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-display">
+                Bharat-Yaan
+            </h1>
+            <div class="hidden md:flex space-x-8">
+                <a href="#vision" class="nav-link pb-1 text-gray-300 hover:text-cyan-400">Vision</a>
+                <a href="#interior" class="nav-link pb-1 text-gray-300 hover:text-cyan-400">Interior</a>
+                <a href="#features" class="nav-link pb-1 text-gray-300 hover:text-cyan-400">Features</a>
+                <a href="#gallery" class="nav-link pb-1 text-gray-300 hover:text-cyan-400">Gallery</a>
+                <a href="#trip-planner" class="nav-link pb-1 text-gray-300 hover:text-cyan-400">Trip Planner</a>
+                <a href="#floorplan" class="nav-link pb-1 text-gray-300 hover:text-cyan-400">Floorplan</a>
+            </div>
+            <a href="#enquire" class="hidden md:inline-block bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold py-3 px-6 rounded-full hover:from-cyan-600 hover:to-purple-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                ✨ Enquire Now
+            </a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="vision" class="min-h-screen flex items-center bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 relative overflow-hidden">
+            <!-- Futuristic Background Pattern -->
+            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500/10 via-blue-500/10 to-purple-500/10"></div>
+            
+            <!-- Animated Grid Pattern -->
+            <div class="absolute inset-0 opacity-20">
+                <div class="absolute inset-0" style="background-image: 
+                    linear-gradient(rgba(59, 130, 246, 0.1) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
+                    background-size: 50px 50px;
+                    animation: gridMove 20s linear infinite;"></div>
+            </div>
+            
+            <!-- Floating Orbs -->
+            <div class="absolute inset-0 pointer-events-none">
+                <div class="absolute top-10 left-10 w-40 h-40 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-full blur-xl opacity-30 animate-pulse" style="animation-delay: 0s; animation-duration: 3s;"></div>
+                <div class="absolute top-20 right-20 w-32 h-32 bg-gradient-to-r from-purple-400 to-pink-500 rounded-full blur-xl opacity-30 animate-pulse" style="animation-delay: 1s; animation-duration: 4s;"></div>
+                <div class="absolute bottom-20 left-1/4 w-24 h-24 bg-gradient-to-r from-green-400 to-blue-500 rounded-full blur-xl opacity-30 animate-pulse" style="animation-delay: 2s; animation-duration: 5s;"></div>
+                <div class="absolute bottom-32 right-1/3 w-36 h-36 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full blur-xl opacity-30 animate-pulse" style="animation-delay: 1.5s; animation-duration: 6s;"></div>
+            </div>
+            
+            <!-- Geometric Shapes -->
+            <div class="absolute inset-0 pointer-events-none">
+                <div class="absolute top-1/4 left-1/4 w-20 h-20 border-2 border-cyan-400/30 rotate-45 animate-spin" style="animation-duration: 10s;"></div>
+                <div class="absolute top-1/3 right-1/4 w-16 h-16 border-2 border-purple-400/30 rotate-12 animate-bounce" style="animation-duration: 8s;"></div>
+                <div class="absolute bottom-1/4 left-1/3 w-12 h-12 bg-gradient-to-r from-blue-400 to-cyan-400 rounded-full animate-ping" style="animation-duration: 4s;"></div>
+            </div>
+            
+            <!-- Neon Glow Effects -->
+            <div class="absolute inset-0 pointer-events-none">
+                <div class="absolute top-0 left-1/2 w-96 h-96 bg-gradient-to-b from-blue-400/20 to-transparent rounded-full blur-3xl transform -translate-x-1/2"></div>
+                <div class="absolute bottom-0 right-1/2 w-80 h-80 bg-gradient-to-t from-purple-400/20 to-transparent rounded-full blur-3xl transform translate-x-1/2"></div>
+            </div>
+            
+            <!-- Your Local Images as Floating Elements -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-16 right-16 w-32 h-24 bg-cover bg-center rounded-lg shadow-2xl transform rotate-12 animate-float" style="background-image: url('static/images/IMG_0202.JPG'); animation-delay: 0s;"></div>
+                <div class="absolute bottom-20 left-20 w-28 h-20 bg-cover bg-center rounded-lg shadow-2xl transform -rotate-6 animate-float" style="background-image: url('static/images/IMG_0228.jpg'); animation-delay: 2s;"></div>
+                <div class="absolute top-1/2 right-1/4 w-24 h-18 bg-cover bg-center rounded-lg shadow-2xl transform rotate-6 animate-float" style="background-image: url('static/images/IMG_0207.jpg'); animation-delay: 4s;"></div>
+            </div>
+            
+            <div class="container mx-auto px-6 text-center relative z-10">
+                <!-- Glowing Title -->
+                <div class="mb-8">
+                    <h1 class="text-6xl md:text-8xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 font-display leading-tight animate-fadeInUp drop-shadow-2xl">
+                        Project: Bharat-Yaan
+                    </h1>
+                    <div class="mt-2 h-1 w-32 bg-gradient-to-r from-cyan-400 to-purple-500 mx-auto rounded-full animate-pulse"></div>
+                </div>
+                
+                <!-- Subtitle with Neon Effect -->
+                <p class="text-xl md:text-2xl text-gray-100 mt-6 max-w-4xl mx-auto animate-fadeInUp font-light tracking-wide" style="animation-delay: 0.5s; text-shadow: 0 0 20px rgba(147, 197, 253, 0.5);">
+                    🚀 Redefining exploration with cutting-edge technology and futuristic luxury. 
+                    <span class="text-cyan-400 font-semibold">The future of travel</span> reimagined for India's next generation.
+                </p>
+                
+                <!-- Futuristic Call to Action -->
+                <div class="mt-12 flex flex-col sm:flex-row justify-center gap-6 animate-fadeInUp" style="animation-delay: 1s;">
+                    <button class="group relative px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold rounded-full overflow-hidden transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-cyan-500/50">
+                        <span class="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        <span class="relative flex items-center">
+                            🎯 Explore Gallery
+                            <span class="ml-2 transform group-hover:translate-x-1 transition-transform duration-300">→</span>
+                        </span>
+                    </button>
+                    <button class="group relative px-8 py-4 bg-transparent border-2 border-cyan-400 text-cyan-400 font-bold rounded-full overflow-hidden transform hover:scale-105 transition-all duration-300 hover:text-white hover:border-purple-500">
+                        <span class="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                        <span class="relative flex items-center">
+                            🧭 Discover More
+                            <span class="ml-2 transform group-hover:translate-x-1 transition-transform duration-300">→</span>
+                        </span>
+                    </button>
+                </div>
+                
+                <!-- Futuristic Feature Cards -->
+                <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 animate-fadeInUp" style="animation-delay: 1.5s;">
+                    <div class="group relative bg-gradient-to-br from-cyan-900/30 to-blue-900/30 backdrop-blur-lg rounded-2xl p-6 border border-cyan-500/20 hover:border-cyan-400/50 transition-all duration-300 hover:transform hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-blue-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative">
+                            <div class="text-5xl mb-4 animate-bounce">�</div>
+                            <h3 class="font-bold text-xl text-cyan-400 mb-2">AI-Powered Systems</h3>
+                            <p class="text-gray-300 text-sm">Next-generation technology for the ultimate travel experience</p>
+                        </div>
+                    </div>
+                    
+                    <div class="group relative bg-gradient-to-br from-purple-900/30 to-pink-900/30 backdrop-blur-lg rounded-2xl p-6 border border-purple-500/20 hover:border-purple-400/50 transition-all duration-300 hover:transform hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative">
+                            <div class="text-5xl mb-4 animate-bounce" style="animation-delay: 0.5s;">⚡</div>
+                            <h3 class="font-bold text-xl text-purple-400 mb-2">Zero-Emission Ready</h3>
+                            <p class="text-gray-300 text-sm">Sustainable luxury for tomorrow's adventurers</p>
+                        </div>
+                    </div>
+                    
+                    <div class="group relative bg-gradient-to-br from-green-900/30 to-teal-900/30 backdrop-blur-lg rounded-2xl p-6 border border-green-500/20 hover:border-green-400/50 transition-all duration-300 hover:transform hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-br from-green-500/10 to-teal-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <div class="relative">
+                            <div class="text-5xl mb-4 animate-bounce" style="animation-delay: 1s;">🛸</div>
+                            <h3 class="font-bold text-xl text-green-400 mb-2">Quantum Comfort</h3>
+                            <p class="text-gray-300 text-sm">Space-age design meets Indian craftsmanship</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Scroll Indicator -->
+                <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+                    <div class="w-8 h-12 border-2 border-cyan-400 rounded-full flex justify-center">
+                        <div class="w-1 h-3 bg-cyan-400 rounded-full mt-2 animate-pulse"></div>
+                    </div>
+                    <p class="text-cyan-400 text-xs mt-2 font-semibold">Scroll to Explore</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="chassis" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">The Foundation of Freedom</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Every great journey starts on a solid platform. The Bharat-Yaan is built upon the formidable BharatBenz 16T AC bus chassis, renowned for its reliability, power, and comfort across India's diverse terrains. This isn't just a vehicle; it's a promise of safe and seamless adventures.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8 text-center">
+                    <div class="bg-gray-50 p-8 rounded-lg">
+                        <span class="text-4xl">⚙️</span>
+                        <h3 class="text-2xl font-semibold mt-4 mb-2">Robust Performance</h3>
+                        <p class="text-gray-600">Powered by a 6-cylinder diesel engine, it delivers ample torque and efficiency, conquering highways and high altitudes with equal confidence.</p>
+                    </div>
+                    <div class="bg-gray-50 p-8 rounded-lg">
+                        <span class="text-4xl">🛡️</span>
+                        <h3 class="text-2xl font-semibold mt-4 mb-2">Unmatched Safety</h3>
+                        <p class="text-gray-600">Equipped with ABS, a sturdy frame, and a driver-centric cabin, ensuring peace of mind on every mile of your journey.</p>
+                    </div>
+                    <div class="bg-gray-50 p-8 rounded-lg">
+                        <span class="text-4xl">💨</span>
+                        <h3 class="text-2xl font-semibold mt-4 mb-2">Superior Comfort</h3>
+                        <p class="text-gray-600">The factory-standard air suspension system provides an exceptionally smooth ride, transforming rugged roads into gentle cruises.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="interior" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">Your Private World on Wheels</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Step inside a realm where sporty dynamism meets opulent comfort. The interior of the Bharat-Yaan is meticulously designed into distinct zones, each serving a unique purpose while maintaining a cohesive aesthetic of modern luxury. Explore the different zones to see how we blend form and function.</p>
+                </div>
+                <div class="flex justify-center mb-8 border-b">
+                    <button class="tab-button text-lg font-semibold py-3 px-6 text-gray-600 transition-colors" data-target="zone-cockpit">Cockpit</button>
+                    <button class="tab-button text-lg font-semibold py-3 px-6 text-gray-600 transition-colors" data-target="zone-lounge">Lounge</button>
+                    <button class="tab-button text-lg font-semibold py-3 px-6 text-gray-600 transition-colors" data-target="zone-kitchen">Kitchenette</button>
+                    <button class="tab-button text-lg font-semibold py-3 px-6 text-gray-600 transition-colors" data-target="zone-bedroom">Bedroom</button>
+                </div>
+                <div id="interior-content" class="mt-8">
+                    <div id="zone-cockpit" class="tab-content">
+                        <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="h-80 w-full bg-gray-300 rounded-lg flex items-center justify-center bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1563729994-15335a7a5342?q=80&w=2874&auto=format&fit=crop');">
+                               <div class="w-full h-full bg-black/20 rounded-lg"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-semibold font-display text-gray-800">The Command Center</h3>
+                                <p class="mt-4 text-gray-600">The driver's cockpit combines ergonomic design with a sporty flair. Carbon fiber accents and brushed aluminum details complement the plush leather captain's chairs. A state-of-the-art digital dashboard provides all critical information at a glance, while integrated navigation and entertainment systems make every drive a pleasure.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="zone-lounge" class="tab-content hidden">
+                         <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="h-80 w-full bg-gray-300 rounded-lg flex items-center justify-center bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1617104679713-20f78b7462d5?q=80&w=2940&auto=format&fit=crop');">
+                               <div class="w-full h-full bg-black/20 rounded-lg"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-semibold font-display text-gray-800">The Social Heart</h3>
+                                <p class="mt-4 text-gray-600">Unwind in the expansive lounge area. A supple L-shaped sofa, crafted from the finest leather, invites relaxation. A large smart TV, discreetly integrated, and a premium sound system provide entertainment. Panoramic windows offer breathtaking views, connecting you with the world outside in absolute comfort.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="zone-kitchen" class="tab-content hidden">
+                         <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="h-80 w-full bg-gray-300 rounded-lg flex items-center justify-center bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1600607687839-e5a8c2759f2a?q=80&w=2940&auto=format&fit=crop');">
+                               <div class="w-full h-full bg-black/20 rounded-lg"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-semibold font-display text-gray-800">The Culinary Studio</h3>
+                                <p class="mt-4 text-gray-600">A compact yet fully-equipped kitchenette makes gourmet cooking on the go a reality. It features a solid-surface countertop, an induction cooktop, a microwave oven, and a sizeable refrigerator. Clever storage solutions ensure everything has its place, combining elegance with efficiency.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="zone-bedroom" class="tab-content hidden">
+                         <div class="grid md:grid-cols-2 gap-8 items-center">
+                            <div class="h-80 w-full bg-gray-300 rounded-lg flex items-center justify-center bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1615875605825-5eb9bb5fea38?q=80&w=2874&auto=format&fit=crop');">
+                               <div class="w-full h-full bg-black/20 rounded-lg"></div>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-semibold font-display text-gray-800">The Serene Retreat</h3>
+                                <p class="mt-4 text-gray-600">The private rear bedroom is your sanctuary of peace. A queen-sized bed with a premium mattress promises restful sleep. Wardrobes with ambient lighting, personal reading lights, and dedicated device charging ports create a space that is both luxurious and highly functional.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">Crafted for a New Class of Explorer</h2>
+                     <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Beyond aesthetics, the Bharat-Yaan is packed with cutting-edge technology and thoughtful amenities. These features are designed to make your travels self-sufficient, comfortable, and safe. Click "✨ Learn More" for an AI-powered explanation of each feature.</p>
+                </div>
+                
+                 <div class="flex justify-center mb-8 border-b">
+                    <button class="feature-toggle-button font-semibold py-2 px-4 rounded-t-lg" data-category="tech">Technology</button>
+                    <button class="feature-toggle-button font-semibold py-2 px-4 rounded-t-lg" data-category="comfort">Comfort & Utility</button>
+                    <button class="feature-toggle-button font-semibold py-2 px-4 rounded-t-lg" data-category="safety">Safety & Power</button>
+                </div>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="tech">
+                        <div>
+                            <h4 class="font-semibold text-lg">Central Command Touchscreen</h4>
+                            <p class="text-gray-600 mt-1">Control lighting, climate, water levels, and power systems from a single intuitive interface.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+                    <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="tech">
+                        <div>
+                            <h4 class="font-semibold text-lg">4G LTE Wi-Fi Hotspot</h4>
+                            <p class="text-gray-600 mt-1">Stay connected wherever your journey takes you with a built-in, high-gain antenna Wi-Fi system.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+                     <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="tech">
+                        <div>
+                            <h4 class="font-semibold text-lg">Premium Surround Sound</h4>
+                            <p class="text-gray-600 mt-1">An immersive audio experience throughout the lounge and bedroom areas for entertainment.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+
+                    <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="comfort">
+                        <div>
+                            <h4 class="font-semibold text-lg">400L Fresh Water Tank</h4>
+                            <p class="text-gray-600 mt-1">Extended capacity for longer off-grid stays without compromising on convenience.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+                    <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="comfort">
+                        <div>
+                            <h4 class="font-semibold text-lg">Slide-out Section</h4>
+                            <p class="text-gray-600 mt-1">Expands the living area at the touch of a button, creating a spacious interior when parked.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+                     <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="comfort">
+                        <div>
+                            <h4 class="font-semibold text-lg">Luxury Wet-Bath</h4>
+                            <p class="text-gray-600 mt-1">A fully-featured washroom with a hot water shower, premium fixtures, and a cassette toilet.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+
+                    <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="safety">
+                        <div>
+                            <h4 class="font-semibold text-lg">1000W Solar Panel Array</h4>
+                            <p class="text-gray-600 mt-1">Roof-mounted solar panels to continuously charge the battery bank for true energy independence.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+                    <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="safety">
+                        <div>
+                            <h4 class="font-semibold text-lg">5kWh Lithium Battery Bank</h4>
+                            <p class="text-gray-600 mt-1">High-capacity power storage to run all appliances, including the air conditioner, off-grid.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+                     <div class="feature-item flex flex-col justify-between p-6 bg-gray-50 rounded-lg" data-category="safety">
+                        <div>
+                            <h4 class="font-semibold text-lg">360° Camera System</h4>
+                            <p class="text-gray-600 mt-1">Provides a bird's-eye view for easy maneuvering and parking in tight spaces, enhancing safety.</p>
+                        </div>
+                        <button class="learn-more-btn mt-4 text-sm font-semibold text-[#C09578] self-start">✨ Learn More</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="trip-planner" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">✨ Plan Your Journey with AI</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Dreaming of your next adventure? Describe your ideal destination in India and the length of your trip, and our AI-powered planner will craft a bespoke itinerary just for your Bharat-Yaan.</p>
+                </div>
+                <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg">
+                    <div class="grid md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="destination" class="block text-sm font-medium text-gray-700">Destination</label>
+                            <input type="text" id="destination" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#C09578] focus:ring focus:ring-[#C09578] focus:ring-opacity-50" placeholder="e.g., Leh-Ladakh">
+                        </div>
+                        <div>
+                            <label for="duration" class="block text-sm font-medium text-gray-700">Duration (in days)</label>
+                            <input type="number" id="duration" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-[#C09578] focus:ring focus:ring-[#C09578] focus:ring-opacity-50" placeholder="e.g., 14">
+                        </div>
+                    </div>
+                    <button id="generate-trip-btn" class="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors flex items-center justify-center">
+                        Generate Itinerary
+                    </button>
+                </div>
+                <div id="trip-result-container" class="max-w-4xl mx-auto mt-12">
+                    <div id="trip-loader" class="hidden mx-auto loader"></div>
+                    <div id="trip-result" class="prose lg:prose-xl max-w-none bg-white p-8 rounded-lg shadow-lg hidden"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Image Gallery Section -->
+        <section id="gallery" class="py-16 md:py-24 bg-gray-50">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">📸 Visual Journey</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">Explore our caravan through stunning imagery. Click on any image to view it in detail.</p>
+                </div>
+                
+                <!-- Gallery Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/0.png" alt="Caravan Image 1" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/09508497-571F-4065-B159-D08A23C8A2A2.png" alt="Caravan Image 2" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/AD34B6BF-E271-45BA-997B-64CD39B087C2.png" alt="Caravan Image 3" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/C7E13B79-1E7C-4FC0-85C6-0A66A7AB4D2C.png" alt="Caravan Image 4" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/DDB2696D-2176-400A-B77E-A5BACD1A8FEA.png" alt="Caravan Image 5" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/FACB13C9-5C70-4957-B0C7-626E55ECED8D.png" alt="Caravan Image 6" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/Gemini_Generated_Image_97rl9p97rl9p97rl.png" alt="Caravan Image 7" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/Gemini_Generated_Image_nz3a3mnz3a3mnz3a.png" alt="Caravan Image 8" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0202.JPG" alt="Caravan Image 9" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0206(1).JPG" alt="Caravan Image 10" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0207.jpg" alt="Caravan Image 11" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0208.jpg" alt="Caravan Image 12" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0228.jpg" alt="Caravan Image 13" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0229.jpg" alt="Caravan Image 14" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0230(1).jpg" alt="Caravan Image 15" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0231.jpg" alt="Caravan Image 16" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                    <div class="gallery-item group cursor-pointer relative overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+                        <img src="static/images/IMG_0233(2).jpg" alt="Caravan Image 17" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-500">
+                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="text-white font-semibold text-lg">View Details</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Carousel/Slideshow -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <div class="text-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800 font-display">🎬 Auto Slideshow</h3>
+                        <p class="text-gray-600 mt-2">Sit back and enjoy an automatic slideshow of all our images</p>
+                    </div>
+                    
+                    <div class="relative max-w-4xl mx-auto">
+                        <div id="slideshow-container" class="relative overflow-hidden rounded-lg shadow-lg">
+                            <div id="slideshow-track" class="flex transition-transform duration-500 ease-in-out">
+                                <!-- Images will be dynamically loaded here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Navigation Controls -->
+                        <div class="flex justify-center items-center mt-6 space-x-4">
+                            <button id="prev-btn" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                ← Previous
+                            </button>
+                            <button id="play-pause-btn" class="bg-[#C09578] text-white px-6 py-2 rounded-lg hover:bg-[#A8825A] transition-colors">
+                                ⏸️ Pause
+                            </button>
+                            <button id="next-btn" class="bg-gray-800 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                                Next →
+                            </button>
+                        </div>
+                        
+                        <!-- Slide Indicators -->
+                        <div id="slide-indicators" class="flex justify-center mt-4 space-x-2">
+                            <!-- Indicators will be dynamically created -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="finishes" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                 <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">Define Your Style</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">Personalization is the ultimate luxury. The Bharat-Yaan offers a curated selection of interior finishes that blend sporty aesthetics with timeless elegance. Click on the swatches below to explore the materials that will shape your personal sanctuary.</p>
+                </div>
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="md:col-span-1">
+                        <h3 class="text-2xl font-semibold mb-4">Material Palette</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="swatch cursor-pointer" data-finish="cognac">
+                                <div class="h-24 bg-[#9A6A4E] rounded-lg"></div>
+                                <p class="text-center font-semibold mt-2">Cognac Leather</p>
+                            </div>
+                            <div class="swatch cursor-pointer" data-finish="charcoal">
+                                <div class="h-24 bg-[#3E3E3E] rounded-lg"></div>
+                                <p class="text-center font-semibold mt-2">Charcoal Alcantara</p>
+                            </div>
+                            <div class="swatch cursor-pointer" data-finish="walnut">
+                                <div class="h-24 bg-[#6E4A3A] rounded-lg"></div>
+                                <p class="text-center font-semibold mt-2">Smoked Walnut</p>
+                            </div>
+                            <div class="swatch cursor-pointer" data-finish="aluminum">
+                                <div class="h-24 bg-[#B0B0B0] rounded-lg"></div>
+                                <p class="text-center font-semibold mt-2">Brushed Aluminum</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="md:col-span-2 bg-white p-8 rounded-lg shadow-lg">
+                        <div id="finish-display" class="transition-opacity duration-300">
+                             <h3 id="finish-title" class="text-3xl font-semibold font-display text-gray-800">Select a Finish</h3>
+                             <p id="finish-description" class="mt-4 text-gray-600 text-lg">Click on a material from the palette to see how it contributes to the unique character of the Bharat-Yaan interior. Each choice reflects a commitment to quality and style.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="floorplan" class="py-16 md:py-24">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">Intelligent Space, Uncompromised Flow</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-3xl mx-auto">The layout is engineered for maximum livability and comfort. Hover over the different zones in the floorplan below to understand the seamless integration of living, sleeping, and utility areas within the expansive chassis.</p>
+                </div>
+                <div class="max-w-5xl mx-auto bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
+                    <div class="relative w-full" style="padding-top: 35%;">
+                        <div class="absolute inset-0 flex flex-col">
+                            <div class="flex-grow flex">
+                                <div class="w-1/4 floorplan-area border-r-2 border-dashed border-gray-300 flex items-center justify-center p-2" data-info="Driver & Co-driver Cockpit with ergonomic captain's chairs and advanced controls.">
+                                    <span class="font-semibold text-gray-700">Cockpit</span>
+                                </div>
+                                <div class="w-3/4 flex flex-col">
+                                    <div class="h-3/5 flex">
+                                        <div class="w-2/3 floorplan-area border-r-2 border-dashed border-gray-300 flex items-center justify-center p-2" data-info="Spacious lounge and dining area with an L-shaped sofa. Features a slide-out for extra room.">
+                                             <span class="font-semibold text-gray-700">Lounge (Slide-out)</span>
+                                        </div>
+                                        <div class="w-1/3 floorplan-area flex items-center justify-center p-2" data-info="Compact and efficient kitchenette with premium appliances and smart storage.">
+                                             <span class="font-semibold text-gray-700">Kitchen</span>
+                                        </div>
+                                    </div>
+                                    <div class="h-2/5 border-t-2 border-dashed border-gray-300 flex">
+                                        <div class="w-2/3 floorplan-area border-r-2 border-dashed border-gray-300 flex items-center justify-center p-2" data-info="Private bedroom with a queen-sized bed, ambient lighting, and ample wardrobe space.">
+                                            <span class="font-semibold text-gray-700">Master Bedroom</span>
+                                        </div>
+                                        <div class="w-1/3 floorplan-area flex items-center justify-center p-2" data-info="Luxury wet-bath with a hot water shower, modern fixtures, and cassette toilet.">
+                                            <span class="font-semibold text-gray-700">Washroom</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="floorplan-info" class="text-center mt-6 text-lg text-gray-700 font-semibold h-8 transition-opacity duration-300">
+                    Hover over an area to see details.
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="py-16 md:py-24 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-800 font-display">A Class Apart</h2>
+                    <p class="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">To truly appreciate the Bharat-Yaan, see how its key features stack up against a standard caravan. This interactive chart highlights the significant upgrades in capacity and capability that enable true freedom on the road.</p>
+                </div>
+                <div class="chart-container">
+                    <canvas id="comparisonChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="enquire" class="py-16 md:py-24 bg-gray-800 text-white">
+            <div class="container mx-auto px-6 text-center">
+                 <h2 class="text-4xl font-bold font-display">Begin Your Journey</h2>
+                 <p class="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">The Bharat-Yaan is more than a vehicle; it's a passport to a new lifestyle. If you are ready to explore the possibilities of bespoke travel, contact our design team to discuss how we can bring your vision to life.</p>
+                 <button class="mt-8 bg-white text-gray-800 font-bold py-3 px-8 rounded-lg text-lg hover:bg-gray-200 transition-colors">Contact Us</button>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-gradient-to-r from-gray-900 via-slate-900 to-gray-900 text-gray-400 py-8 border-t border-cyan-500/20">
+        <div class="container mx-auto px-6 text-center">
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 font-display">
+                    Bharat-Yaan
+                </h2>
+                <div class="mt-2 h-0.5 w-24 bg-gradient-to-r from-cyan-400 to-purple-500 mx-auto rounded-full"></div>
+            </div>
+            <p class="text-cyan-300">&copy; 2025 Bharat-Yaan Concepts. All Rights Reserved.</p>
+            <p class="text-sm mt-2 text-gray-500">🚀 This is a conceptual design showcase. Vehicle specifications are illustrative.</p>
+            <div class="mt-4 flex justify-center space-x-6">
+                <span class="text-xs text-gray-600">✨ Powered by AI Innovation</span>
+                <span class="text-xs text-gray-600">🌟 Made for Tomorrow</span>
+                <span class="text-xs text-gray-600">🚀 Future Ready</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Gemini Feature Modal -->
+    <div id="feature-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+            <div class="p-6 border-b flex justify-between items-center">
+                <h3 id="modal-title" class="text-2xl font-display"></h3>
+                <button id="modal-close-btn" class="text-gray-500 hover:text-gray-800">&times;</button>
+            </div>
+            <div class="p-6">
+                <div id="modal-loader" class="hidden mx-auto loader"></div>
+                <p id="modal-content" class="text-gray-600"></p>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            
+            // --- Gemini API Call Function ---
+            async function callGemini(prompt) {
+                const apiKey = ""; // API key will be handled by the environment
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                
+                const payload = {
+                    contents: [{ role: "user", parts: [{ text: prompt }] }]
+                };
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API call failed with status: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    
+                    if (result.candidates && result.candidates.length > 0 &&
+                        result.candidates[0].content && result.candidates[0].content.parts &&
+                        result.candidates[0].content.parts.length > 0) {
+                        return result.candidates[0].content.parts[0].text;
+                    } else {
+                        // Check for safety ratings or other response issues
+                        if (result.promptFeedback && result.promptFeedback.blockReason) {
+                             return `Content blocked due to: ${result.promptFeedback.blockReason}. Please try a different prompt.`;
+                        }
+                        return "Sorry, I couldn't generate a response. Please try again.";
+                    }
+                } catch (error) {
+                    console.error("Error calling Gemini API:", error);
+                    return "An error occurred while contacting the AI. Please check the console for details.";
+                }
+            }
+
+            // --- AI Trip Planner Logic ---
+            const generateTripBtn = document.getElementById('generate-trip-btn');
+            const destinationInput = document.getElementById('destination');
+            const durationInput = document.getElementById('duration');
+            const tripResultContainer = document.getElementById('trip-result');
+            const tripLoader = document.getElementById('trip-loader');
+
+            generateTripBtn.addEventListener('click', async () => {
+                const destination = destinationInput.value;
+                const duration = durationInput.value;
+
+                if (!destination || !duration) {
+                    alert('Please enter both a destination and duration.');
+                    return;
+                }
+
+                tripLoader.classList.remove('hidden');
+                tripResultContainer.classList.add('hidden');
+                
+                const prompt = `Create a detailed caravan road trip itinerary for a ${duration}-day trip to ${destination} in India, designed for the "Bharat-Yaan" luxury caravan. Suggest scenic routes, potential overnight parking spots suitable for a large caravan (mentioning specific campsites or safe locations if possible), local attractions, and ideas for meals that can be cooked in a well-equipped kitchenette. Structure the response with clear headings for each day (e.g., "Day 1: ..."). The tone should be adventurous and inspiring. Format the response using markdown-style headings (e.g., # Title, ## Subtitle, * item).`;
+
+                const response = await callGemini(prompt);
+                
+                // Simple markdown to HTML conversion
+                let htmlResponse = response
+                    .replace(/^### (.*$)/gim, '<h3 class="text-xl font-semibold mt-4">$1</h3>')
+                    .replace(/^## (.*$)/gim, '<h2 class="text-2xl font-bold mt-6 border-b pb-2 mb-3">$1</h2>')
+                    .replace(/^# (.*$)/gim, '<h1 class="text-3xl font-display font-bold mb-4">$1</h1>')
+                    .replace(/\*\s(.*)/g, '<li class="ml-4">$1</li>')
+                    .replace(/(\r\n|\n|\r)/gm, '<br>');
+
+                tripResultContainer.innerHTML = htmlResponse;
+                tripLoader.classList.add('hidden');
+                tripResultContainer.classList.remove('hidden');
+            });
+
+            // --- Smart Feature Explainer Modal Logic ---
+            const learnMoreButtons = document.querySelectorAll('.learn-more-btn');
+            const featureModal = document.getElementById('feature-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalContent = document.getElementById('modal-content');
+            const modalLoader = document.getElementById('modal-loader');
+            const modalCloseBtn = document.getElementById('modal-close-btn');
+
+            learnMoreButtons.forEach(button => {
+                button.addEventListener('click', async () => {
+                    const featureItem = button.closest('.feature-item');
+                    const featureTitle = featureItem.querySelector('h4').textContent;
+                    
+                    modalTitle.textContent = featureTitle;
+                    modalContent.textContent = '';
+                    modalLoader.classList.remove('hidden');
+                    featureModal.style.display = 'flex';
+
+                    const prompt = `In a simple, engaging way, explain the benefit of having a "${featureTitle}" on a luxury caravan like the Bharat-Yaan in India. Focus on what it enables the user to do and the freedom it provides. Keep the explanation under 100 words and easy to understand for a non-technical person.`;
+                    
+                    const response = await callGemini(prompt);
+                    
+                    modalContent.textContent = response;
+                    modalLoader.classList.add('hidden');
+                });
+            });
+
+            function closeModal() {
+                featureModal.style.display = 'none';
+            }
+
+            modalCloseBtn.addEventListener('click', closeModal);
+            featureModal.addEventListener('click', (e) => {
+                if (e.target === featureModal) {
+                    closeModal();
+                }
+            });
+
+
+            // --- Existing Page Logic ---
+
+            // Interior Tabs Logic
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            function activateTab(button) {
+                const targetId = button.dataset.target;
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                tabContents.forEach(content => {
+                    content.classList.toggle('hidden', content.id !== targetId);
+                });
+            }
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => activateTab(button));
+            });
+            activateTab(tabButtons[0]);
+
+
+            // Features Toggle Logic
+            const featureToggleButtons = document.querySelectorAll('.feature-toggle-button');
+            const featureItems = document.querySelectorAll('.feature-item');
+
+            function filterFeatures(category) {
+                 featureToggleButtons.forEach(btn => {
+                    btn.classList.toggle('bg-gray-200', btn.dataset.category === category);
+                 });
+                 featureItems.forEach(item => {
+                    item.style.display = item.dataset.category === category ? 'flex' : 'none';
+                 });
+            }
+            
+            featureToggleButtons.forEach(button => {
+                button.addEventListener('click', () => filterFeatures(button.dataset.category));
+            });
+            filterFeatures('tech');
+
+
+            // Finishes Swatch Logic
+            const swatches = document.querySelectorAll('.swatch');
+            const finishTitle = document.getElementById('finish-title');
+            const finishDescription = document.getElementById('finish-description');
+
+            const finishData = {
+                cognac: {
+                    title: 'Sporty Cognac Leather',
+                    description: 'Rich, supple leather that develops a beautiful patina over time. It offers a classic sporty feel, combined with unparalleled comfort for seating and accent panels.'
+                },
+                charcoal: {
+                    title: 'Modern Charcoal Alcantara',
+                    description: 'A high-tech, suede-like material known for its durability and use in performance sports cars. It provides a soft touch and a contemporary, non-reflective finish for ceilings and dashboards.'
+                },
+                walnut: {
+                    title: 'Elegant Smoked Walnut',
+                    description: 'Deep, rich wood grain that brings warmth and natural elegance to the cabinetry and flooring. The smoked finish provides a modern twist on a classic luxury material.'
+                },
+                aluminum: {
+                    title: 'Sleek Brushed Aluminum',
+                    description: 'Precision-milled aluminum trim adds a cool, technical edge to the interior. Used for handles, inlays, and control surfaces, it creates a striking contrast with the warmer materials.'
+                }
+            };
+
+            swatches.forEach(swatch => {
+                swatch.addEventListener('click', () => {
+                    const finish = swatch.dataset.finish;
+                    swatches.forEach(s => s.classList.remove('active'));
+                    swatch.classList.add('active');
+                    finishTitle.textContent = finishData[finish].title;
+                    finishDescription.textContent = finishData[finish].description;
+                });
+            });
+            swatches[0].click();
+
+            // Floorplan Hover Logic
+            const floorplanAreas = document.querySelectorAll('.floorplan-area');
+            const floorplanInfo = document.getElementById('floorplan-info');
+            const defaultInfoText = floorplanInfo.textContent;
+
+            floorplanAreas.forEach(area => {
+                area.addEventListener('mouseenter', () => {
+                    floorplanInfo.textContent = area.dataset.info;
+                });
+                area.addEventListener('mouseleave', () => {
+                    floorplanInfo.textContent = defaultInfoText;
+                });
+            });
+
+
+            // Navigation scroll highlighting
+            const sections = document.querySelectorAll('main section');
+            const navLinks = document.querySelectorAll('.nav-link');
+
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 60) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+            // --- Image Gallery & Slideshow Logic ---
+            const galleryImages = [
+                'static/images/0.png',
+                'static/images/09508497-571F-4065-B159-D08A23C8A2A2.png',
+                'static/images/AD34B6BF-E271-45BA-997B-64CD39B087C2.png',
+                'static/images/C7E13B79-1E7C-4FC0-85C6-0A66A7AB4D2C.png',
+                'static/images/DDB2696D-2176-400A-B77E-A5BACD1A8FEA.png',
+                'static/images/FACB13C9-5C70-4957-B0C7-626E55ECED8D.png',
+                'static/images/Gemini_Generated_Image_97rl9p97rl9p97rl.png',
+                'static/images/Gemini_Generated_Image_nz3a3mnz3a3mnz3a.png',
+                'static/images/IMG_0202.JPG',
+                'static/images/IMG_0206(1).JPG',
+                'static/images/IMG_0207.jpg',
+                'static/images/IMG_0208.jpg',
+                'static/images/IMG_0228.jpg',
+                'static/images/IMG_0229.jpg',
+                'static/images/IMG_0230(1).jpg',
+                'static/images/IMG_0231.jpg',
+                'static/images/IMG_0233(2).jpg'
+            ];
+
+            let currentSlideIndex = 0;
+            let isPlaying = true;
+            let slideInterval;
+
+            // Image captions with context and significance
+            const imageCaptions = [
+                {
+                    title: "Luxury Caravan Exterior",
+                    description: "Experience the stunning exterior design of Bharat-Yaan - where modern aerodynamics meets premium craftsmanship. This image showcases the vehicle's impressive scale and sophisticated finish, designed for the discerning Indian traveler.",
+                    context: "Perfect for highway cruising and scenic destinations across India"
+                },
+                {
+                    title: "Advanced Interior Layout",
+                    description: "Step inside the thoughtfully designed interior space featuring premium materials and smart storage solutions. This layout maximizes comfort while maintaining the luxurious feel expected from a high-end caravan.",
+                    context: "Ideal for extended road trips with family and friends"
+                },
+                {
+                    title: "Modern Dashboard & Controls",
+                    description: "The state-of-the-art command center combines cutting-edge technology with ergonomic design. Every control is positioned for optimal driver comfort and safety during long journeys.",
+                    context: "Essential for safe navigation through diverse Indian terrains"
+                },
+                {
+                    title: "Spacious Living Area",
+                    description: "The heart of your mobile home featuring comfortable seating and entertainment systems. This social space transforms travel time into quality time with loved ones.",
+                    context: "Perfect for relaxation after exploring India's incredible destinations"
+                },
+                {
+                    title: "Fully Equipped Kitchen",
+                    description: "Cook gourmet meals on the road with this compact yet fully-featured kitchenette. Premium appliances and smart storage make culinary adventures possible anywhere.",
+                    context: "Enables authentic food experiences during your travels"
+                },
+                {
+                    title: "Luxury Sleeping Quarters",
+                    description: "Rest in comfort with this premium bedroom featuring hotel-quality amenities. The private space ensures peaceful sleep no matter where your journey takes you.",
+                    context: "Essential for multi-day adventures across India"
+                },
+                {
+                    title: "Scenic Route Capability",
+                    description: "Built to handle India's diverse landscapes - from mountain passes to coastal highways. This image represents the freedom to explore every corner of our beautiful country.",
+                    context: "Your gateway to experiencing India's natural wonders"
+                },
+                {
+                    title: "Off-Road Performance",
+                    description: "Engineered for adventure beyond paved roads. The robust chassis and advanced suspension system ensure smooth travel even on challenging terrain.",
+                    context: "Perfect for accessing hidden gems and remote destinations"
+                },
+                {
+                    title: "Exterior Features Detail",
+                    description: "Premium exterior amenities including solar panels, storage compartments, and outdoor living extensions. Every detail designed for the ultimate travel experience.",
+                    context: "Maximizes your outdoor adventure potential"
+                },
+                {
+                    title: "Technology Integration",
+                    description: "Smart connectivity and entertainment systems keep you connected while exploring. Modern amenities ensure comfort without sacrificing the adventure spirit.",
+                    context: "Stay connected while discovering India's remote beauty"
+                },
+                {
+                    title: "Dining Experience",
+                    description: "Transform any location into a five-star dining experience. The mobile kitchen enables culinary creativity with local ingredients from across India.",
+                    context: "Taste the flavors of India from your own mobile kitchen"
+                },
+                {
+                    title: "Bathroom Facilities",
+                    description: "Luxury bathroom amenities ensure comfort and privacy during extended travels. Hot showers and modern fixtures make every day feel like a hotel experience.",
+                    context: "Essential comfort for long-distance Indian road trips"
+                },
+                {
+                    title: "Storage Solutions",
+                    description: "Intelligent storage systems accommodate everything needed for extended adventures. Smart organization keeps your mobile home tidy and functional.",
+                    context: "Pack for any adventure across India's diverse climates"
+                },
+                {
+                    title: "Entertainment Systems",
+                    description: "Premium audio-visual systems for relaxation and entertainment. Create memorable evenings under the stars with friends and family.",
+                    context: "Perfect for creating lasting memories on your journey"
+                },
+                {
+                    title: "Power Management",
+                    description: "Advanced electrical systems including solar power and battery management. Stay powered up for extended off-grid adventures across India.",
+                    context: "Essential for exploring remote locations independently"
+                },
+                {
+                    title: "Safety Features",
+                    description: "Comprehensive safety systems including advanced driver assistance and emergency equipment. Peace of mind for families exploring India's highways.",
+                    context: "Your safety is our priority on every adventure"
+                },
+                {
+                    title: "Adventure Ready",
+                    description: "Ready for any adventure India has to offer - from Himalayan expeditions to coastal explorations. This is your passport to discovering incredible India.",
+                    context: "Begin your journey of a lifetime with Bharat-Yaan"
+                }
+            ];
+
+            // Initialize Gallery
+            function initializeGallery() {
+                const slideshowTrack = document.getElementById('slideshow-track');
+                const slideIndicators = document.getElementById('slide-indicators');
+                
+                // Create slideshow images with detailed captions
+                galleryImages.forEach((imageSrc, index) => {
+                    const caption = imageCaptions[index];
+                    const slideItem = document.createElement('div');
+                    slideItem.className = 'min-w-full flex-shrink-0 relative';
+                    slideItem.innerHTML = `
+                        <img src="${imageSrc}" alt="${caption.title}" class="w-full h-96 object-cover rounded-lg">
+                        <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 rounded-b-lg">
+                            <div class="text-white">
+                                <h4 class="text-xl font-bold mb-2">${caption.title}</h4>
+                                <p class="text-sm text-gray-200 mb-2">${caption.description}</p>
+                                <p class="text-xs text-[#C09578] font-semibold">${caption.context}</p>
+                                <div class="mt-2 text-xs text-gray-300">
+                                    <span>Image ${index + 1} of ${galleryImages.length}</span>
+                                    <span class="mx-2">•</span>
+                                    <span>Bharat-Yaan Gallery</span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    slideshowTrack.appendChild(slideItem);
+                    
+                    // Create indicator
+                    const indicator = document.createElement('button');
+                    indicator.className = `w-3 h-3 rounded-full transition-all duration-300 ${index === 0 ? 'bg-[#C09578]' : 'bg-gray-300'}`;
+                    indicator.addEventListener('click', () => goToSlide(index));
+                    indicator.title = caption.title;
+                    slideIndicators.appendChild(indicator);
+                });
+                
+                // Add click handlers for gallery items
+                document.querySelectorAll('.gallery-item').forEach((item, index) => {
+                    item.addEventListener('click', () => {
+                        goToSlide(index);
+                        // Scroll to slideshow
+                        document.getElementById('slideshow-container').scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'center' 
+                        });
+                    });
+                });
+            }
+
+            // Go to specific slide
+            function goToSlide(index) {
+                currentSlideIndex = index;
+                const slideshowTrack = document.getElementById('slideshow-track');
+                const slideIndicators = document.getElementById('slide-indicators');
+                
+                // Update track position
+                slideshowTrack.style.transform = `translateX(-${index * 100}%)`;
+                
+                // Update indicators
+                slideIndicators.querySelectorAll('button').forEach((indicator, i) => {
+                    indicator.className = `w-3 h-3 rounded-full transition-all duration-300 ${i === index ? 'bg-[#C09578]' : 'bg-gray-300'}`;
+                });
+            }
+
+            // Next slide
+            function nextSlide() {
+                currentSlideIndex = (currentSlideIndex + 1) % galleryImages.length;
+                goToSlide(currentSlideIndex);
+            }
+
+            // Previous slide
+            function prevSlide() {
+                currentSlideIndex = currentSlideIndex === 0 ? galleryImages.length - 1 : currentSlideIndex - 1;
+                goToSlide(currentSlideIndex);
+            }
+
+            // Auto-play functionality
+            function startAutoPlay() {
+                slideInterval = setInterval(nextSlide, 3000); // Change slide every 3 seconds
+            }
+
+            function stopAutoPlay() {
+                clearInterval(slideInterval);
+            }
+
+            // Control buttons
+            document.getElementById('next-btn').addEventListener('click', () => {
+                nextSlide();
+                if (isPlaying) {
+                    stopAutoPlay();
+                    startAutoPlay(); // Restart timer
+                }
+            });
+
+            document.getElementById('prev-btn').addEventListener('click', () => {
+                prevSlide();
+                if (isPlaying) {
+                    stopAutoPlay();
+                    startAutoPlay(); // Restart timer
+                }
+            });
+
+            document.getElementById('play-pause-btn').addEventListener('click', () => {
+                const playPauseBtn = document.getElementById('play-pause-btn');
+                if (isPlaying) {
+                    stopAutoPlay();
+                    playPauseBtn.textContent = '▶️ Play';
+                    playPauseBtn.className = 'bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors';
+                } else {
+                    startAutoPlay();
+                    playPauseBtn.textContent = '⏸️ Pause';
+                    playPauseBtn.className = 'bg-[#C09578] text-white px-6 py-2 rounded-lg hover:bg-[#A8825A] transition-colors';
+                }
+                isPlaying = !isPlaying;
+            });
+
+            // Initialize gallery and start autoplay
+            initializeGallery();
+            startAutoPlay();
+
+            // Pause autoplay when user hovers over slideshow
+            document.getElementById('slideshow-container').addEventListener('mouseenter', () => {
+                if (isPlaying) stopAutoPlay();
+            });
+
+            document.getElementById('slideshow-container').addEventListener('mouseleave', () => {
+                if (isPlaying) startAutoPlay();
+            });
+
+            // Keyboard navigation
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                } else if (e.key === 'ArrowRight') {
+                    nextSlide();
+                } else if (e.key === ' ') {
+                    e.preventDefault();
+                    document.getElementById('play-pause-btn').click();
+                }
+            });
+
+            // Add smooth scrolling animation for gallery items
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -100px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Observe gallery items for animation
+            document.querySelectorAll('.gallery-item').forEach((item, index) => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                item.style.transition = `opacity 0.6s ease ${index * 0.1}s, transform 0.6s ease ${index * 0.1}s`;
+                observer.observe(item);
+            });
+
+            // Update navigation link for gallery
+            const galleryNavLink = document.createElement('a');
+            galleryNavLink.href = '#gallery';
+            galleryNavLink.className = 'nav-link pb-1';
+            galleryNavLink.textContent = 'Gallery';
+            
+            const nav = document.querySelector('nav .hidden.md\\:flex');
+            if (nav) {
+                nav.insertBefore(galleryNavLink, nav.children[3]); // Insert before Trip Planner
+            }
+
+            // --- End of Gallery Logic ---
+
+            // --- Hero Section Functionality ---
+            document.querySelectorAll('button').forEach(button => {
+                if (button.textContent.includes('Explore Gallery')) {
+                    button.addEventListener('click', () => {
+                        document.getElementById('gallery').scrollIntoView({ 
+                            behavior: 'smooth' 
+                        });
+                    });
+                }
+                if (button.textContent.includes('Learn More')) {
+                    button.addEventListener('click', () => {
+                        document.getElementById('chassis').scrollIntoView({ 
+                            behavior: 'smooth' 
+                        });
+                    });
+                }
+            });
+
+
+            // Comparison Chart
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            const comparisonChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Fresh Water (L)', 'Battery Capacity (kWh)', 'Solar Power (W)'],
+                    datasets: [
+                        {
+                            label: 'Bharat-Yaan Concept',
+                            data: [400, 5, 1000],
+                            backgroundColor: 'rgba(192, 149, 120, 0.8)',
+                            borderColor: 'rgba(192, 149, 120, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Standard Caravan',
+                            data: [120, 1, 200],
+                            backgroundColor: 'rgba(74, 74, 74, 0.7)',
+                            borderColor: 'rgba(74, 74, 74, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Capability Comparison',
+                            font: { size: 18, family: 'Inter' },
+                            color: '#4A4A4A'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += context.parsed.x + ' ' + (context.label.includes('Water') ? 'L' : context.label.includes('Battery') ? 'kWh' : 'W');
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#e0e0e0'
+                            },
+                             ticks: {
+                                color: '#4A4A4A'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#4A4A4A'
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
